@@ -1,20 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Runs on Vercel's Edge before any page loads.
-// Looks at the visitor's device and silently serves the right
-// static HTML file (desktop.html or mobile.html) from /public.
 export function middleware(request: NextRequest) {
-  const userAgent = request.headers.get("user-agent") || "";
-  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent);
-
   const url = request.nextUrl.clone();
-  url.pathname = isMobile ? "/mobile.html" : "/desktop.html";
+  const { pathname } = url;
 
-  return NextResponse.rewrite(url);
+  if (pathname === "/") {
+    url.pathname = "/home.html";
+    return NextResponse.rewrite(url);
+  }
+
+  if (pathname === "/2d") {
+    url.pathname = "/plan-2d.html";
+    return NextResponse.rewrite(url);
+  }
+
+  if (pathname === "/3d") {
+    const userAgent = request.headers.get("user-agent") || "";
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent);
+    url.pathname = isMobile ? "/mobile.html" : "/desktop.html";
+    return NextResponse.rewrite(url);
+  }
+
+  return NextResponse.next();
 }
 
-// Only intercept the homepage. Everything else (the html files
-// themselves, fonts, etc.) is served normally.
 export const config = {
-  matcher: "/",
+  matcher: ["/", "/2d", "/3d"],
 };

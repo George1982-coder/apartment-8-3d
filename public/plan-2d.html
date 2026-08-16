@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="ka" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#f4f2ec">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@300;400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>ბინა №8 — გეგმა</title>
+<style>
+  :root{
+    --paper:#f4f2ec; --ink:#1d2733; --wall:#2f3b47; --par:#8e99a6;
+    --hair:#7d8894; --dim:#5f6e7d; --blue:#2f7c9c; --panel:#ffffff; --line:#d8d3c7;
+    --safe-b:env(safe-area-inset-bottom, 0px);
+    --safe-t:env(safe-area-inset-top, 0px);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden;background:var(--paper);overscroll-behavior:none;touch-action:none}
+  body{
+    font-family:"Noto Sans Georgian","BPG Arial","Sylfaen","Segoe UI",Arial,sans-serif;
+    color:var(--ink);-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none;
+  }
+  #stage{position:fixed;inset:0;background:
+    repeating-linear-gradient(0deg,rgba(0,0,0,.035) 0 1px,transparent 1px 24px),
+    repeating-linear-gradient(90deg,rgba(0,0,0,.035) 0 1px,transparent 1px 24px),
+    var(--paper);
+  }
+  svg{display:block;width:100%;height:100%;cursor:grab}
+  svg.drag{cursor:grabbing}
+
+  #top{
+    position:fixed;z-index:10;top:0;right:0;left:0;
+    padding:calc(var(--safe-t) + 10px) 14px 20px;
+    background:linear-gradient(180deg,rgba(244,242,236,.96) 40%,rgba(244,242,236,0));
+    pointer-events:none;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  }
+  #top .t1{font-size:15px;font-weight:700}
+  #top .t2{font-size:11.5px;color:var(--dim);margin-top:2px;font-variant-numeric:tabular-nums}
+  #top .t2 b{color:var(--blue);font-weight:600}
+  .top-actions{pointer-events:auto;display:flex;align-items:center;gap:8px;flex:0 0 auto}
+  #mode{
+    display:flex;gap:3px;padding:3px;border-radius:12px;
+    background:var(--panel);border:1px solid var(--line);
+    box-shadow:0 1px 3px rgba(0,0,0,.07);
+  }
+  #mode a{
+    min-width:44px;height:38px;display:flex;align-items:center;justify-content:center;
+    border-radius:9px;text-decoration:none;font-size:13px;font-weight:700;
+    color:var(--dim);
+  }
+  #mode a.on{background:var(--blue);color:#fff}
+  #menuBtn{
+    pointer-events:auto;flex:0 0 auto;width:46px;height:46px;border-radius:12px;
+    background:var(--panel);border:1px solid var(--line);color:var(--ink);
+    font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;
+    box-shadow:0 1px 3px rgba(0,0,0,.07);
+  }
+  #menuBtn:active{background:var(--blue);color:#fff}
+
+  #dock{
+    position:fixed;z-index:11;right:12px;left:12px;bottom:calc(var(--safe-b) + 12px);
+    background:rgba(255,255,255,.94);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border:1px solid var(--line);border-radius:16px;padding:10px;
+    display:flex;gap:6px;box-shadow:0 2px 10px rgba(0,0,0,.06);
+  }
+  #dock button{
+    flex:1;min-height:46px;appearance:none;cursor:pointer;font-family:inherit;
+    font-size:13px;font-weight:500;color:var(--dim);
+    background:#fbfaf7;border:1px solid var(--line);border-radius:11px;padding:6px 2px;
+    transition:background .14s,color .14s,border-color .14s;
+  }
+  #dock button.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+  #dock button:active{transform:scale(.97)}
+
+  #scrim{position:fixed;inset:0;z-index:19;background:rgba(20,26,32,.4);opacity:0;pointer-events:none;transition:opacity .22s}
+  #scrim.open{opacity:1;pointer-events:auto}
+  #sheet{
+    position:fixed;z-index:20;right:0;left:0;bottom:0;max-height:82%;overflow:auto;
+    -webkit-overflow-scrolling:touch;background:var(--panel);border-top:1px solid var(--line);
+    border-radius:20px 20px 0 0;padding:8px 18px calc(var(--safe-b) + 24px);
+    transform:translateY(102%);transition:transform .26s cubic-bezier(.3,.8,.4,1);touch-action:pan-y;
+  }
+  #sheet.open{transform:translateY(0)}
+  #sheet .grab{width:42px;height:4px;border-radius:4px;background:var(--line);margin:8px auto 16px}
+  .sec{font-size:11px;letter-spacing:.12em;color:var(--dim);margin:0 0 9px;text-transform:uppercase}
+  ul.rooms{list-style:none}
+  ul.rooms li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+  ul.rooms li .nm{display:flex;align-items:center;gap:9px}
+  ul.rooms li .sw2{width:11px;height:11px;border-radius:2px;flex:0 0 11px;border:1px solid rgba(0,0,0,.12)}
+  ul.rooms li .a{color:var(--blue);font-size:13.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+  ul.rooms li.sub{border-bottom:0;padding-bottom:2px;color:var(--dim);font-size:13px}
+  ul.rooms li.sum{border-bottom:0;border-top:2px solid var(--ink);margin-top:6px;font-weight:700}
+  .note{font-size:12.5px;color:var(--dim);line-height:1.75;margin-top:14px}
+
+  @media (min-width:900px){
+    #dock{right:auto;left:50%;transform:translateX(-50%);width:640px}
+  }
+</style>
+</head>
+<body>
+
+<div id="stage"><svg id="plan" xmlns="http://www.w3.org/2000/svg"></svg></div>
+
+<div id="top">
+  <div>
+    <div class="t1">ბინა №8 — გეგმა</div>
+    <div class="t2">85.7 <b>+</b> 14.6 <b>=</b> 100.3 m²</div>
+  </div>
+  <div class="top-actions">
+    <nav id="mode" aria-label="2D or 3D">
+      <a href="/2d" class="on">2D</a>
+      <a href="/3d">3D</a>
+    </nav>
+    <button id="menuBtn" aria-label="პანელის გახსნა">☰</button>
+  </div>
+</div>
+
+<div id="dock">
+  <button class="on" id="bDim">ზომები</button>
+  <button class="on" id="bFurn">ავეჯი</button>
+  <button class="on" id="bLbl">სახელები</button>
+  <button id="bReset">ხედის დაბრუნება</button>
+</div>
+
+<div id="scrim"></div>
+<div id="sheet">
+  <div class="grab"></div>
+  <p class="sec">ოთახები</p>
+  <ul class="rooms" id="roomList"></ul>
+  <p class="note">
+    მართვა: გადათრევა — გადაადგილება · პინჩი ან სკროლი — მასშტაბი · ორმაგი შეხება — საწყისი ხედი.<br>
+    კედლის სისქე: გარე 0.30 m, შიდა 0.15 m.
+  </p>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   ბინა №8 — 2D გეგმა. ერთეულები: მეტრი.
+   ფართობები აღებულია ბინის ოფიციალური ექსპლიკაციიდან:
+   20.5 / 12.4 / 17.1 / 14.7 / 8.4 / 4.2 / 2.8 = 80.1 m² (სუფთა)
+   85.7 m² (კედლებით) + 14.6 m² აივნები = 100.3 m²
+   (0,0) = მთავარი კორპუსის შიდა ჩრდილო-დასავლეთი კუთხე.
+   ============================================================ */
+
+var SVGNS = 'http://www.w3.org/2000/svg';
+var svg = document.getElementById('plan');
+
+function el(name, attrs, parent){
+  var n = document.createElementNS(SVGNS, name);
+  for(var k in attrs){ if(attrs[k] !== null && attrs[k] !== undefined) n.setAttribute(k, attrs[k]); }
+  (parent||svg).appendChild(n);
+  return n;
+}
+function g(cls, parent){ return el('g', {'class':cls}, parent); }
+
+var root  = el('g', {id:'root'});
+var gRoom = g('rooms', root);
+var gFurn = g('furn', root);
+var gWall = g('walls', root);
+var gDoor = g('doors', root);
+var gDim  = g('dims', root);
+var gLbl  = g('labels', root);
+
+/* ============================================================
+   ოთახები — ფართობები ექსპლიკაციის მიხედვით
+   ============================================================ */
+var C = {live:'#e6d7c0', bed:'#eadcc4', hall:'#e3dccd', wet:'#cfdde3', out:'#ddd8cf'};
+
+var rooms = [
+  {n:'მისაღები + სამზარეულო',     a:'20.5', x1:0,     y1:0,     x2:3.20, y2:6.41,  c:C.live},
+  {n:'საძინებელი',                a:'12.4', x1:3.35,  y1:0,     x2:6.00, y2:4.68,  c:C.bed},
+  {n:'მთავარი საძინებელი',        a:'17.1', x1:6.15,  y1:0,     x2:9.35, y2:5.34,  c:C.bed},
+  {n:'საძინებელი',                a:'14.7', x1:-1.85, y1:6.56,  x2:3.20, y2:9.47,  c:C.bed},
+  {n:'დერეფანი',                  a:'8.4',  x1:3.35,  y1:4.83,  x2:6.00, y2:7.40,  c:C.hall,
+    more:[{x1:6.15, y1:5.49, x2:7.25, y2:6.93}]},
+  {n:'სააბაზანო',                 a:'4.2',  x1:3.35,  y1:7.55,  x2:6.00, y2:9.13,  c:C.wet},
+  {n:'საპირფარეშო + სამრეცხაო',   a:'2.8',  x1:7.40,  y1:5.49,  x2:9.35, y2:6.93,  c:C.wet},
+  {n:'აივანი',                    a:'12.3', x1:0,     y1:-1.62, x2:9.35, y2:-0.30, c:C.out},
+  {n:'აივანი',                    a:'2.3',  x1:-1.85, y1:4.93,  x2:-0.30, y2:6.41,  c:C.out}
+];
+
+rooms.forEach(function(r){
+  var list = [{x1:r.x1,y1:r.y1,x2:r.x2,y2:r.y2}].concat(r.more||[]);
+  list.forEach(function(q){
+    el('rect', {x:q.x1, y:q.y1, width:q.x2-q.x1, height:q.y2-q.y1, fill:r.c}, gRoom);
+  });
+});
+
+/* ============================================================
+   კედლები და ღიობები
+   ============================================================ */
+var W = [
+  /* აივნის მოაჯირი (ჩრდილოეთი) */
+  {x1:-0.375, y1:-1.695, x2:9.575, y2:-1.695, t:0.15, par:true},
+
+  /* კედელი აივანსა და ოთახებს შორის */
+  {x1:-0.30, y1:-0.15, x2:9.65, y2:-0.15, t:0.30, op:[
+    {a:0.60, b:3.20, k:'w'},
+    {a:3.85, b:6.10, k:'w'},
+    {a:6.65, b:9.45, k:'w'}
+  ]},
+
+  /* დასავლეთის ფასადი (მისაღები) */
+  {x1:-0.15, y1:-1.77, x2:-0.15, y2:6.41, t:0.30, op:[
+    {a:2.87, b:4.37, k:'w'},
+    {a:6.77, b:7.67, k:'d', s:1}
+  ]},
+
+  /* აღმოსავლეთის ფასადი */
+  {x1:9.50, y1:-1.77, x2:9.50, y2:7.23, t:0.30, op:[
+    {a:3.27, b:5.27, k:'w'},
+    {a:7.72, b:8.32, k:'w'}
+  ]},
+
+  /* დასავლეთის აივნის მოაჯირები */
+  {x1:-2.075, y1:4.855, x2:-0.15,   y2:4.855, t:0.15, par:true},
+  {x1:-1.925, y1:4.78,  x2:-1.925,  y2:6.41,  t:0.15, par:true},
+
+  /* ქვედა საძინებლის დასავლეთის ფასადი */
+  {x1:-2.00, y1:6.41, x2:-2.00, y2:9.62, t:0.30, op:[{a:0.89, b:2.29, k:'w'}]},
+
+  /* კედელი მისაღები/აივანი ↔ ქვედა საძინებელი */
+  {x1:-2.15, y1:6.485, x2:3.35, y2:6.485, t:0.15},
+
+  /* სამხრეთის ფასადი (საძინებელი) */
+  {x1:-2.15, y1:9.62, x2:3.35, y2:9.62, t:0.30, op:[{a:2.35, b:3.95, k:'w'}]},
+
+  /* სამხრეთის ფასადი (სააბაზანო) */
+  {x1:3.20, y1:9.28, x2:6.15, y2:9.28, t:0.30, op:[{a:1.10, b:1.90, k:'w'}]},
+
+  /* აღმოსავლეთის ფასადი (სააბაზანო / დერეფანი) */
+  {x1:6.15, y1:7.08, x2:6.15, y2:9.43, t:0.30},
+
+  /* სამხრეთის ფასადი (საპირფარეშო / ჰოლი) — შესასვლელი კარი */
+  {x1:6.00, y1:7.08, x2:9.65, y2:7.08, t:0.30, op:[{a:0.35, b:1.20, k:'d', s:-1}]},
+
+  /* კედელი: მისაღები | საძინებელი | დერეფანი | ქვედა საძინებელი */
+  {x1:3.275, y1:-0.15, x2:3.275, y2:9.43, t:0.15, op:[
+    {a:5.35, b:6.45, k:'o'},
+    {a:6.85, b:7.75, k:'d', s:1}
+  ]},
+
+  /* კედელი: საძინებელი | მთავარი საძინებელი | დერეფანი | ჰოლი */
+  {x1:6.075, y1:-0.15, x2:6.075, y2:7.08, t:0.15, op:[
+    {a:5.85, b:6.70, k:'d', s:-1}
+  ]},
+
+  /* შუა საძინებლის სამხრეთის კედელი */
+  {x1:3.275, y1:4.755, x2:6.075, y2:4.755, t:0.15, op:[
+    {a:1.775, b:2.625, k:'d', s:-1, h:1}
+  ]},
+
+  /* მთავარი საძინებლის სამხრეთის კედელი */
+  {x1:6.075, y1:5.415, x2:9.50, y2:5.415, t:0.15, op:[
+    {a:0.225, b:1.075, k:'d', s:-1}
+  ]},
+
+  /* კედელი ჰოლსა და საპირფარეშოს შორის */
+  {x1:7.325, y1:5.49, x2:7.325, y2:7.08, t:0.15, op:[
+    {a:0.31, b:1.11, k:'d', s:-1}
+  ]},
+
+  /* დერეფნის სამხრეთის კედელი */
+  {x1:3.275, y1:7.475, x2:6.15, y2:7.475, t:0.15, op:[
+    {a:0.325, b:1.225, k:'d', s:1}
+  ]}
+];
+
+function wallPiece(w, dx, dy, d0, d1){
+  var t = w.t;
+  if(d1 - d0 <= 0.004) return;
+  var x = w.x1 + dx*d0, y = w.y1 + dy*d0, len = d1 - d0;
+  var rx, ry, rw, rh;
+  if(dx !== 0){ rx = x; ry = y - t/2; rw = len; rh = t; }
+  else        { rx = x - t/2; ry = y;  rw = t;   rh = len; }
+  el('rect', {x:rx, y:ry, width:rw, height:rh,
+              fill: w.par ? 'var(--par)' : 'var(--wall)'}, gWall);
+}
+
+W.forEach(function(w){
+  var ddx = w.x2-w.x1, ddy = w.y2-w.y1;
+  var len = Math.sqrt(ddx*ddx + ddy*ddy);
+  var dx = ddx/len, dy = ddy/len;
+  var ops = (w.op||[]).slice().sort(function(p,q){ return p.a-q.a; });
+  var cur = 0;
+
+  ops.forEach(function(o){
+    wallPiece(w, dx, dy, cur, o.a);
+    cur = o.b;
+    var ax = w.x1 + dx*o.a, ay = w.y1 + dy*o.a;
+    var wl = o.b - o.a;
+
+    if(o.k === 'w'){
+      var th = w.t*0.30;
+      if(dx !== 0) el('rect', {x:ax, y:ay-th/2, width:wl, height:th, fill:'#fff', stroke:'var(--wall)', 'stroke-width':0.025}, gDoor);
+      else         el('rect', {x:ax-th/2, y:ay, width:th, height:wl, fill:'#fff', stroke:'var(--wall)', 'stroke-width':0.025}, gDoor);
+    } else if(o.k === 'd'){
+      var s = o.s || 1;
+      var px = -dy*s, py = dx*s;
+      var hd = o.h ? o.b : o.a, fd = o.h ? o.a : o.b;
+      var hx = w.x1 + dx*hd, hy = w.y1 + dy*hd;
+      var fx = w.x1 + dx*fd, fy = w.y1 + dy*fd;
+      var lx = hx + px*wl,   ly = hy + py*wl;
+      var cross = (lx-hx)*(fy-hy) - (ly-hy)*(fx-hx);
+      var sweep = cross > 0 ? 1 : 0;
+      el('path', {d:'M '+hx+' '+hy+' L '+lx+' '+ly, stroke:'var(--wall)', 'stroke-width':0.055, fill:'none', 'stroke-linecap':'round'}, gDoor);
+      el('path', {d:'M '+lx+' '+ly+' A '+wl+' '+wl+' 0 0 '+sweep+' '+fx+' '+fy,
+                  stroke:'var(--hair)', 'stroke-width':0.022, fill:'none', 'stroke-dasharray':'0.10 0.07'}, gDoor);
+    }
+    /* 'o' — ღია გასასვლელი, ნიშანი არ სჭირდება */
+  });
+  wallPiece(w, dx, dy, cur, len);
+});
+
+/* ============================================================
+   ავეჯი (გეგმის ხედი)
+   ============================================================ */
+var FS = {fill:'#fff', stroke:'var(--hair)', 'stroke-width':0.028};
+function box(x1,y1,x2,y2,extra){
+  var a = {x:x1, y:y1, width:x2-x1, height:y2-y1}, k;
+  for(k in FS) a[k] = FS[k];
+  if(extra) for(k in extra) a[k] = extra[k];
+  el('rect', a, gFurn);
+}
+function circ(cx,cy,r,extra){
+  var a = {cx:cx, cy:cy, r:r}, k;
+  for(k in FS) a[k] = FS[k];
+  if(extra) for(k in extra) a[k] = extra[k];
+  el('circle', a, gFurn);
+}
+function line(x1,y1,x2,y2){
+  el('line', {x1:x1,y1:y1,x2:x2,y2:y2, stroke:'var(--hair)', 'stroke-width':0.022}, gFurn);
+}
+function bedPlan(x1,y1,x2,y2,dir){
+  box(x1,y1,x2,y2,{fill:'#f7f4ee'});
+  var p = 0.42;
+  if(dir === 'w'){
+    line(x1+p, y1, x1+p, y2);
+    box(x1+0.08, y1+0.10, x1+p-0.08, (y1+y2)/2-0.04);
+    box(x1+0.08, (y1+y2)/2+0.04, x1+p-0.08, y2-0.10);
+  } else if(dir === 'e'){
+    line(x2-p, y1, x2-p, y2);
+    box(x2-p+0.08, y1+0.10, x2-0.08, (y1+y2)/2-0.04);
+    box(x2-p+0.08, (y1+y2)/2+0.04, x2-0.08, y2-0.10);
+  } else if(dir === 's'){
+    line(x1, y2-p, x2, y2-p);
+    box(x1+0.10, y2-p+0.08, (x1+x2)/2-0.04, y2-0.08);
+    box((x1+x2)/2+0.04, y2-p+0.08, x2-0.10, y2-0.08);
+  } else {
+    line(x1, y1+p, x2, y1+p);
+    box(x1+0.10, y1+0.08, (x1+x2)/2-0.04, y1+p-0.08);
+    box((x1+x2)/2+0.04, y1+0.08, x2-0.10, y1+p-0.08);
+  }
+}
+function toiletPlan(cx,cy,rot){
+  var gg = el('g', {transform:'translate('+cx+','+cy+') rotate('+(rot||0)+')'}, gFurn);
+  el('rect', {x:-0.18, y:-0.29, width:0.36, height:0.18, fill:'#fff', stroke:'var(--hair)', 'stroke-width':0.028}, gg);
+  el('ellipse', {cx:0, cy:0.02, rx:0.16, ry:0.24, fill:'#fff', stroke:'var(--hair)', 'stroke-width':0.028}, gg);
+}
+function sinkPlan(cx,cy,rot){
+  var gg = el('g', {transform:'translate('+cx+','+cy+') rotate('+(rot||0)+')'}, gFurn);
+  el('rect', {x:-0.28, y:-0.21, width:0.56, height:0.42, rx:0.05, fill:'#fff', stroke:'var(--hair)', 'stroke-width':0.028}, gg);
+  el('ellipse', {cx:0, cy:0.02, rx:0.19, ry:0.14, fill:'none', stroke:'var(--hair)', 'stroke-width':0.022}, gg);
+}
+
+/* --- აივანი (ჩრდილოეთი) --- */
+circ(1.95,-0.95,0.35); box(0.90,-1.20,1.32,-0.78);
+circ(7.95,-0.95,0.35); box(9.00,-1.20,9.42,-0.78);
+circ(4.10,-0.90,0.24,{fill:'#dde6d8'});
+circ(6.05,-0.85,0.20,{fill:'#dde6d8'});
+circ(8.85,-1.00,0.22,{fill:'#dde6d8'});
+
+/* --- მისაღები + სამზარეულო --- */
+box(0.05,1.20,1.05,3.50,{fill:'#f2f0ea'}); line(0.33,1.20,0.33,3.50);
+circ(1.72,2.35,0.35);
+box(2.82,1.60,3.20,3.10,{fill:'#f2f0ea'});
+box(0.85,3.80,2.25,4.90,{fill:'#f0e2cf'});
+box(1.20,3.32,1.90,3.72); box(1.20,4.98,1.90,5.38);
+box(0.40,4.02,0.80,4.68); box(2.30,4.02,2.70,4.68);
+box(0.10,5.72,0.78,6.41,{fill:'#f2f0ea'});
+box(0.90,5.81,3.15,6.41,{fill:'#f2f0ea'});
+box(1.25,5.94,1.80,6.32); line(1.52,5.99,1.52,6.27);
+box(2.30,5.90,2.90,6.35); line(2.38,5.98,2.82,5.98); line(2.38,6.27,2.82,6.27);
+
+/* --- შუა საძინებელი --- */
+bedPlan(3.42,1.20,5.47,2.90,'w');
+box(3.42,0.62,3.86,1.06);
+box(3.45,4.02,5.40,4.62,{fill:'#f0e2cf'}); line(3.45,4.02,5.40,4.62);
+
+/* --- მთავარი საძინებელი --- */
+bedPlan(7.25,1.40,9.30,3.25,'e');
+box(8.86,0.92,9.30,1.36); box(8.86,3.29,9.30,3.73);
+box(6.20,1.00,6.80,3.60,{fill:'#f0e2cf'}); line(6.20,1.00,6.80,3.60);
+box(7.60,4.72,9.10,5.22,{fill:'#f2f0ea'});
+
+/* --- ქვედა საძინებელი --- */
+bedPlan(-1.80,7.35,0.30,9.05,'w');
+box(-1.80,6.74,-1.36,7.18);
+box(1.25,6.62,3.15,7.22,{fill:'#f0e2cf'}); line(1.25,6.62,3.15,7.22);
+circ(1.10,8.60,0.62,{fill:'none','stroke-dasharray':'0.12 0.08'});
+
+/* --- ჰოლი (დერეფნის ნაწილი) --- */
+box(6.22,6.50,7.20,6.88,{fill:'#f2f0ea'});
+
+/* --- სააბაზანო --- */
+box(3.42,8.42,5.02,9.08); line(3.42,8.42,5.02,9.08); line(5.02,8.42,3.42,9.08);
+sinkPlan(5.62,8.88,-90);
+toiletPlan(5.60,7.92,-90);
+
+/* --- საპირფარეშო + სამრეცხაო --- */
+toiletPlan(7.78,5.82,0);
+sinkPlan(8.50,5.80,0);
+box(8.66,6.28,9.28,6.90); circ(8.97,6.59,0.18,{fill:'none'});
+
+/* --- დასავლეთის აივანი --- */
+circ(-1.05,5.42,0.30); box(-1.26,5.92,-0.84,6.34);
+circ(-1.55,5.15,0.20,{fill:'#dde6d8'});
+
+/* ============================================================
+   ზომები
+   ============================================================ */
+function dimH(y, x1, x2, txt){
+  var gg = el('g', {}, gDim);
+  el('line', {x1:x1, y1:y, x2:x2, y2:y, stroke:'var(--dim)', 'stroke-width':0.02}, gg);
+  [x1,x2].forEach(function(x){
+    el('line', {x1:x-0.09, y1:y-0.09, x2:x+0.09, y2:y+0.09, stroke:'var(--dim)', 'stroke-width':0.03}, gg);
+  });
+  el('text', {x:(x1+x2)/2, y:y-0.14, 'text-anchor':'middle', 'font-size':0.30,
+              fill:'var(--dim)', 'font-family':'IBM Plex Mono, monospace'}, gg).textContent = txt;
+}
+function dimV(x, y1, y2, txt){
+  var gg = el('g', {}, gDim);
+  el('line', {x1:x, y1:y1, x2:x, y2:y2, stroke:'var(--dim)', 'stroke-width':0.02}, gg);
+  [y1,y2].forEach(function(y){
+    el('line', {x1:x-0.09, y1:y-0.09, x2:x+0.09, y2:y+0.09, stroke:'var(--dim)', 'stroke-width':0.03}, gg);
+  });
+  el('text', {x:x-0.14, y:(y1+y2)/2, 'text-anchor':'middle', 'font-size':0.30,
+              fill:'var(--dim)', 'font-family':'IBM Plex Mono, monospace',
+              transform:'rotate(-90 '+(x-0.14)+' '+((y1+y2)/2)+')'}, gDim).textContent = txt;
+}
+function f(v){ return v.toFixed(2); }
+
+/* ზედა ჯაჭვი */
+dimH(-2.45, 0,    3.20, f(3.20));
+dimH(-2.45, 3.35, 6.00, f(2.65));
+dimH(-2.45, 6.15, 9.35, f(3.20));
+dimH(-3.15, -0.30, 9.65, f(9.95));
+
+/* ქვედა ჯაჭვი */
+dimH(10.45, -1.85, 3.20, f(5.05));
+dimH(10.45, 3.35,  6.00, f(2.65));
+dimH(11.15, -2.15, 6.15, f(8.30));
+
+/* მარჯვენა ჯაჭვი */
+dimV(10.35, -1.62, -0.30, f(1.32));
+dimV(10.35, 0,     5.34,  f(5.34));
+dimV(10.35, 5.49,  6.93,  f(1.44));
+dimV(11.05, -1.77, 7.23,  f(9.00));
+
+/* მარცხენა ჯაჭვი */
+dimV(-2.95, 0,    4.68, f(4.68));
+dimV(-2.95, 4.93, 6.41, f(1.48));
+dimV(-2.95, 6.56, 9.47, f(2.91));
+dimV(-3.65, -1.77, 9.77, f(11.54));
+
+/* მასშტაბის ხაზი */
+(function(){
+  var y = 12.05, x0 = -2.15, gg = el('g', {}, gDim);
+  for(var i=0;i<5;i++){
+    el('rect', {x:x0+i, y:y, width:1, height:0.14,
+                fill: i%2 ? '#fff' : 'var(--dim)', stroke:'var(--dim)', 'stroke-width':0.018}, gg);
+  }
+  el('text', {x:x0, y:y-0.16, 'font-size':0.26, fill:'var(--dim)',
+              'font-family':'IBM Plex Mono, monospace'}, gg).textContent = '0';
+  el('text', {x:x0+5, y:y-0.16, 'text-anchor':'end', 'font-size':0.26, fill:'var(--dim)',
+              'font-family':'IBM Plex Mono, monospace'}, gg).textContent = '5 m';
+})();
+
+/* ============================================================
+   ოთახების წარწერები
+   ============================================================ */
+rooms.forEach(function(r){
+  var cx = (r.x1+r.x2)/2, cy = (r.y1+r.y2)/2;
+  var wRoom = r.x2-r.x1;
+  var size = Math.min(0.30, wRoom/(r.n.length*0.50));
+  size = Math.max(size, 0.15);
+  el('text', {x:cx, y:cy-0.06, 'text-anchor':'middle', 'font-size':size,
+              'font-weight':600, fill:'var(--ink)'}, gLbl).textContent = r.n;
+  el('text', {x:cx, y:cy+size*1.20, 'text-anchor':'middle', 'font-size':size*0.88,
+              fill:'var(--blue)', 'font-family':'IBM Plex Mono, monospace'}, gLbl).textContent = r.a + ' m²';
+});
+
+/* ============================================================
+   ლეგენდა
+   ============================================================ */
+(function(){
+  var html = '';
+  rooms.forEach(function(r){
+    html += '<li><span class="nm"><span class="sw2" style="background:'+r.c+'"></span>'+r.n+
+            '</span><span class="a">'+r.a+' m²</span></li>';
+  });
+  html += '<li class="sub"><span class="nm">სუფთა ფართობი</span><span class="a">80.1 m²</span></li>';
+  html += '<li class="sub"><span class="nm">კედლებით</span><span class="a">85.7 m²</span></li>';
+  html += '<li class="sub"><span class="nm">აივნები</span><span class="a">14.6 m²</span></li>';
+  html += '<li class="sum"><span class="nm">სულ</span><span class="a">100.3 m²</span></li>';
+  document.getElementById('roomList').innerHTML = html;
+})();
+
+/* ============================================================
+   ხედის მართვა
+   ============================================================ */
+var BASE = {x:-4.3, y:-3.7, w:16.0, h:16.4};
+var view = {x:BASE.x, y:BASE.y, w:BASE.w, h:BASE.h};
+
+function applyView(){ svg.setAttribute('viewBox', view.x+' '+view.y+' '+view.w+' '+view.h); }
+function fitView(){
+  var r = svg.getBoundingClientRect();
+  var ar = r.width / r.height, bar = BASE.w / BASE.h, w, h;
+  if(ar > bar){ h = BASE.h; w = h*ar; } else { w = BASE.w; h = w/ar; }
+  view.w = w; view.h = h;
+  view.x = BASE.x + (BASE.w - w)/2;
+  view.y = BASE.y + (BASE.h - h)/2;
+  applyView();
+}
+function zoomAt(cx, cy, factor){
+  var r = svg.getBoundingClientRect();
+  var ux = view.x + (cx - r.left)/r.width  * view.w;
+  var uy = view.y + (cy - r.top) /r.height * view.h;
+  var nw = view.w * factor;
+  if(nw < 2 || nw > 90) return;
+  view.x = ux - (ux - view.x) * factor;
+  view.y = uy - (uy - view.y) * factor;
+  view.w = nw; view.h = view.h * factor;
+  applyView();
+}
+
+var drag = null, pinch = null, lastTap = 0;
+
+svg.addEventListener('mousedown', function(e){ drag = {x:e.clientX, y:e.clientY}; svg.classList.add('drag'); });
+window.addEventListener('mousemove', function(e){
+  if(!drag) return;
+  var r = svg.getBoundingClientRect();
+  view.x -= (e.clientX - drag.x) / r.width  * view.w;
+  view.y -= (e.clientY - drag.y) / r.height * view.h;
+  drag.x = e.clientX; drag.y = e.clientY;
+  applyView();
+});
+window.addEventListener('mouseup', function(){ drag = null; svg.classList.remove('drag'); });
+svg.addEventListener('wheel', function(e){
+  e.preventDefault();
+  zoomAt(e.clientX, e.clientY, e.deltaY > 0 ? 1.12 : 1/1.12);
+}, {passive:false});
+
+function tdist(e){
+  var dx = e.touches[0].clientX - e.touches[1].clientX;
+  var dy = e.touches[0].clientY - e.touches[1].clientY;
+  return Math.sqrt(dx*dx+dy*dy);
+}
+svg.addEventListener('touchstart', function(e){
+  if(e.touches.length === 1){
+    drag = {x:e.touches[0].clientX, y:e.touches[0].clientY};
+    pinch = null;
+    var now = Date.now();
+    if(now - lastTap < 300) fitView();
+    lastTap = now;
+  } else if(e.touches.length === 2){
+    drag = null;
+    pinch = {d:tdist(e),
+             x:(e.touches[0].clientX+e.touches[1].clientX)/2,
+             y:(e.touches[0].clientY+e.touches[1].clientY)/2};
+  }
+}, {passive:true});
+svg.addEventListener('touchmove', function(e){
+  e.preventDefault();
+  var r = svg.getBoundingClientRect();
+  if(e.touches.length === 2 && pinch){
+    var d = tdist(e);
+    var mx = (e.touches[0].clientX+e.touches[1].clientX)/2;
+    var my = (e.touches[0].clientY+e.touches[1].clientY)/2;
+    if(d > 0) zoomAt(mx, my, pinch.d/d);
+    view.x -= (mx - pinch.x) / r.width  * view.w;
+    view.y -= (my - pinch.y) / r.height * view.h;
+    applyView();
+    pinch = {d:d, x:mx, y:my};
+    return;
+  }
+  if(e.touches.length === 1 && drag){
+    view.x -= (e.touches[0].clientX - drag.x) / r.width  * view.w;
+    view.y -= (e.touches[0].clientY - drag.y) / r.height * view.h;
+    drag.x = e.touches[0].clientX; drag.y = e.touches[0].clientY;
+    applyView();
+  }
+}, {passive:false});
+svg.addEventListener('touchend', function(e){
+  if(e.touches.length === 0){ drag = null; pinch = null; }
+  else if(e.touches.length === 1){ pinch = null; drag = {x:e.touches[0].clientX, y:e.touches[0].clientY}; }
+}, {passive:true});
+
+/* ---------- ინტერფეისი ---------- */
+function toggle(id, node){
+  var b = document.getElementById(id);
+  b.addEventListener('click', function(){
+    b.classList.toggle('on');
+    node.style.display = b.classList.contains('on') ? '' : 'none';
+  });
+}
+toggle('bDim',  gDim);
+toggle('bFurn', gFurn);
+toggle('bLbl',  gLbl);
+document.getElementById('bReset').addEventListener('click', fitView);
+
+var sheet = document.getElementById('sheet');
+var scrim = document.getElementById('scrim');
+document.getElementById('menuBtn').addEventListener('click', function(){
+  sheet.classList.add('open'); scrim.classList.add('open');
+});
+function closeSheet(){ sheet.classList.remove('open'); scrim.classList.remove('open'); }
+scrim.addEventListener('click', closeSheet);
+sheet.querySelector('.grab').addEventListener('click', closeSheet);
+
+window.addEventListener('resize', fitView);
+window.addEventListener('orientationchange', function(){ setTimeout(fitView, 250); });
+fitView();
+
+})();
+</script>
+</body>
+</html>

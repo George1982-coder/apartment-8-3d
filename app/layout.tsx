@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "דירה מס' 8 — מודל 3D",
+  title: "דירה מס' 8 — 2D / 3D",
 };
 
 export default function RootLayout({

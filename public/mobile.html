@@ -50,6 +50,17 @@
     font-variant-numeric:tabular-nums;direction:ltr;text-align:left;
   }
   #top .t2 b{color:var(--blue);font-weight:600}
+  .top-actions{pointer-events:auto;display:flex;align-items:center;gap:8px;flex:0 0 auto}
+  #mode{
+    display:flex;gap:3px;padding:3px;border-radius:12px;
+    background:rgba(30,44,58,.9);border:1px solid var(--line);
+  }
+  #mode a{
+    min-width:44px;height:38px;display:flex;align-items:center;justify-content:center;
+    border-radius:9px;text-decoration:none;font-size:13px;font-weight:700;
+    color:var(--dim);
+  }
+  #mode a.on{background:var(--blue);color:#0d1720}
   #menuBtn{
     pointer-events:auto;flex:0 0 auto;
     width:46px;height:46px;border-radius:12px;
@@ -162,7 +173,13 @@
     <div class="t1">ბინა №8</div>
     <div class="t2">85.7 <b>+</b> 14.6 <b>=</b> 100.3 m²</div>
   </div>
-  <button id="menuBtn" aria-label="პანელის გახსნა">☰</button>
+  <div class="top-actions">
+    <nav id="mode" aria-label="2D or 3D">
+      <a href="/2d">2D</a>
+      <a href="/3d" class="on">3D</a>
+    </nav>
+    <button id="menuBtn" aria-label="პანელის გახსნა">☰</button>
+  </div>
 </div>
 
 <div id="dock">
