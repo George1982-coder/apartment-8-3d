@@ -501,6 +501,15 @@ rooms.forEach(function(r){
               fill:'var(--blue)', 'font-family':'IBM Plex Mono, monospace'}, gLbl).textContent = r.a + ' m²';
 });
 
+el('text', {
+  x: 7.90, y: 8.30,
+  'text-anchor': 'middle',
+  'dominant-baseline': 'middle',
+  'font-size': 0.32,
+  'font-weight': 700,
+  fill: 'var(--ink)'
+}, gLbl).textContent = 'შემოსასვლელი';
+
 /* ============================================================
    ლეგენდა
    ============================================================ */
