@@ -84,16 +84,18 @@
     flex:0 0 74px;font-size:11px;color:var(--dim);letter-spacing:.02em;
   }
   .seg{flex:1;display:flex;gap:6px}
-  .seg button{
+  .seg button, .seg a{
     flex:1;min-height:44px;
     appearance:none;cursor:pointer;font-family:inherit;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;text-align:center;
     font-size:14px;font-weight:500;color:var(--dim);
     background:rgba(255,255,255,.04);border:1px solid var(--line);
     border-radius:11px;padding:6px 2px;
     transition:background .14s,color .14s,border-color .14s;
   }
-  .seg button.on{background:var(--blue);border-color:var(--blue);color:#0d1720;font-weight:700}
-  .seg button:active{transform:scale(.97)}
+  .seg button.on,.seg a.on{background:var(--blue);border-color:var(--blue);color:#0d1720;font-weight:700}
+  .seg button:active,.seg a:active{transform:scale(.97)}
 
   /* ---------- sheet ---------- */
   #scrim{
@@ -183,6 +185,13 @@
 </div>
 
 <div id="dock">
+  <div class="row">
+    <span class="cap">תצוגה</span>
+    <div class="seg">
+      <a href="/2d">2D</a>
+      <a href="/3d" class="on">3D</a>
+    </div>
+  </div>
   <div class="row">
     <span class="cap">კედლები</span>
     <div class="seg" id="segCut">
