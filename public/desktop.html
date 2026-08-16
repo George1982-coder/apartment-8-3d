@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="ka" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>ბინა №8 — 3D მოდელი</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@300;400;600;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0f1720;
+    --ink-2:#16212c;
+    --line:#2a3a49;
+    --paper:#e8e3d7;
+    --paper-dim:#9aa8b4;
+    --blue:#5fb3d4;
+    --amber:#e0a458;
+    --radius:2px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;background:var(--ink)}
+  body{
+    font-family:"Noto Sans Georgian","BPG Arial","Sylfaen","Segoe UI",Arial,sans-serif;
+    color:var(--paper);
+    -webkit-font-smoothing:antialiased;
+    touch-action:none;
+  }
+  #stage{position:fixed;inset:0}
+  canvas{display:block}
+
+  /* ---- header ---- */
+  header{
+    position:fixed;top:0;right:0;left:0;z-index:10;
+    display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+    padding:14px 18px;
+    background:linear-gradient(180deg,rgba(15,23,32,.92),rgba(15,23,32,0));
+    pointer-events:none;
+  }
+  header h1{
+    font-size:15px;font-weight:800;letter-spacing:.02em;
+  }
+  header .meta{
+    font-family:"IBM Plex Mono",ui-monospace,monospace;
+    font-size:12px;color:var(--paper-dim);letter-spacing:.04em;
+    direction:ltr;
+  }
+  header .meta b{color:var(--blue);font-weight:500}
+
+  /* ---- control rail ---- */
+  #rail{
+    position:fixed;z-index:12;top:64px;right:18px;
+    width:230px;max-height:calc(100% - 96px);overflow:auto;
+    background:rgba(22,33,44,.86);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px;
+  }
+  #rail::-webkit-scrollbar{width:6px}
+  #rail::-webkit-scrollbar-thumb{background:var(--line)}
+  .grp{margin-bottom:16px}
+  .grp:last-child{margin-bottom:0}
+  .grp > .lbl{
+    font-family:"IBM Plex Mono",monospace;font-size:10px;
+    letter-spacing:.16em;color:var(--paper-dim);
+    display:block;margin-bottom:7px;
+  }
+  .seg{display:flex;gap:5px}
+  .seg button, .tgl{
+    flex:1;appearance:none;cursor:pointer;
+    font-family:inherit;font-size:12.5px;font-weight:400;
+    color:var(--paper-dim);
+    background:transparent;border:1px solid var(--line);
+    border-radius:var(--radius);padding:7px 4px;
+    transition:background .15s,color .15s,border-color .15s;
+  }
+  .seg button:hover,.tgl:hover{color:var(--paper);border-color:#3d5468}
+  .seg button.on{background:var(--blue);border-color:var(--blue);color:#0d1720;font-weight:600}
+  .tgl{width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center}
+  .tgl .dot{width:8px;height:8px;border:1px solid var(--line);border-radius:50%}
+  .tgl.on{color:var(--paper)}
+  .tgl.on .dot{background:var(--amber);border-color:var(--amber)}
+  .stack{display:flex;flex-direction:column;gap:5px}
+
+  /* ---- legend ---- */
+  #legend{
+    position:fixed;z-index:12;bottom:18px;right:18px;
+    width:230px;
+    background:rgba(22,33,44,.86);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border:1px solid var(--line);border-radius:var(--radius);
+    padding:12px 14px;
+  }
+  #legend .lbl{
+    font-family:"IBM Plex Mono",monospace;font-size:10px;
+    letter-spacing:.16em;color:var(--paper-dim);display:block;margin-bottom:8px;
+  }
+  #legend ul{list-style:none;font-size:12.5px}
+  #legend li{
+    display:flex;justify-content:space-between;align-items:center;
+    gap:8px;padding:2.5px 0;border-bottom:1px dotted rgba(154,168,180,.16);
+  }
+  #legend li:last-child{border-bottom:0}
+  #legend li span.a{
+    font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--blue);direction:ltr;
+  }
+  #legend li.sum{margin-top:6px;padding-top:7px;border-top:1px solid var(--line);border-bottom:0;font-weight:600}
+  #legend li.sum span.a{color:var(--amber)}
+  #legend .sw{width:9px;height:9px;flex:0 0 9px;border-radius:1px}
+  #legend li > .nm{display:flex;align-items:center;gap:7px}
+
+  #hint{
+    position:fixed;z-index:11;bottom:20px;left:20px;
+    font-family:"IBM Plex Mono",monospace;font-size:11px;
+    color:rgba(154,168,180,.65);line-height:1.7;direction:ltr;
+  }
+
+  #panelToggle{
+    display:none;position:fixed;z-index:14;top:14px;left:14px;
+    background:rgba(22,33,44,.9);border:1px solid var(--line);color:var(--paper);
+    border-radius:var(--radius);padding:8px 12px;font-family:inherit;font-size:13px;cursor:pointer;
+  }
+
+  #loading{
+    position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;
+    background:var(--ink);font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--paper-dim);
+    letter-spacing:.2em;transition:opacity .5s;
+  }
+  #loading.gone{opacity:0;pointer-events:none}
+
+  @media (max-width:820px){
+    #panelToggle{display:block}
+    header{padding:12px 14px 12px 64px}
+    header h1{font-size:13.5px}
+    header .meta{font-size:11px}
+    #rail{top:56px;right:12px;left:12px;width:auto;max-height:44%}
+    #legend{bottom:12px;right:12px;left:12px;width:auto;max-height:38%;overflow:auto}
+    #hint{display:none}
+    body.collapsed #rail,body.collapsed #legend{display:none}
+  }
+</style>
+</head>
+<body>
+
+<div id="stage"></div>
+
+<header>
+  <h1>ბინა №8 — 3D მოდელი</h1>
+  <div class="meta">85.7 m² <b>+</b> 14.6 m² <b>=</b> 100.3 m²</div>
+</header>
+
+<button id="panelToggle">☰ პანელი</button>
+
+<div id="rail">
+  <div class="grp">
+    <span class="lbl">კედლების სიმაღლე</span>
+    <div class="seg" id="segCut">
+      <button data-cut="2.75" class="on">სრული</button>
+      <button data-cut="1.15">ჭრილი</button>
+      <button data-cut="0.06">იატაკი</button>
+    </div>
+  </div>
+  <div class="grp">
+    <span class="lbl">ხედის წერტილი</span>
+    <div class="seg" id="segView">
+      <button data-view="iso" class="on">იზომეტრიული</button>
+      <button data-view="top">ზემოდან</button>
+      <button data-view="eye">თვალის დონე</button>
+    </div>
+  </div>
+  <div class="grp">
+    <span class="lbl">ფენები</span>
+    <div class="stack">
+      <button class="tgl on" id="tFurn">ავეჯი<span class="dot"></span></button>
+      <button class="tgl on" id="tLbl">ოთახების სახელები<span class="dot"></span></button>
+      <button class="tgl on" id="tGlass">მინა და ფანჯრები<span class="dot"></span></button>
+      <button class="tgl" id="tSpin">ავტომატური ბრუნვა<span class="dot"></span></button>
+    </div>
+  </div>
+</div>
+
+<div id="legend">
+  <span class="lbl">ოთახები</span>
+  <ul id="legendList"></ul>
+</div>
+
+<div id="hint">
+  გადათრევა — ბრუნვა<br>
+  სკროლი / პინჩი — მასშტაბი<br>
+  Shift + გადათრევა — გადაადგილება
+</div>
+
+<div id="loading">LOADING MODEL…</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   ბინა №8 — მოდელი აგებულია არქიტექტორის გეგმის მიხედვით.
+   ერთეულები: მეტრი. ღერძი X = გეგმაზე მარჯვნივ, ღერძი Z = გეგმაზე ქვემოთ.
+   ============================================================ */
+
+var H    = 2.75;   // ჭერის სიმაღლე
+var EXT  = 0.30;   // გარე კედლის სისქე
+var INT  = 0.15;   // შიდა კედლის სისქე
+var PAR  = 1.05;   // აივნის მოაჯირის სიმაღლე
+
+/* ---------- scene ---------- */
+var scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0f1720);
+scene.fog = new THREE.Fog(0x0f1720, 26, 62);
+
+var camera = new THREE.PerspectiveCamera(42, window.innerWidth/window.innerHeight, 0.1, 400);
+
+var renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.localClippingEnabled = true;
+renderer.outputEncoding = THREE.sRGBEncoding;
+document.getElementById('stage').appendChild(renderer.domElement);
+
+/* ---------- lights ---------- */
+scene.add(new THREE.HemisphereLight(0xdce7f0, 0x2b3742, 0.85));
+
+var sun = new THREE.DirectionalLight(0xfff2dd, 0.95);
+sun.position.set(-9, 16, -7);
+sun.castShadow = true;
+sun.shadow.mapSize.width = 2048;
+sun.shadow.mapSize.height = 2048;
+sun.shadow.camera.near = 1;
+sun.shadow.camera.far = 60;
+sun.shadow.camera.left = -16;
+sun.shadow.camera.right = 16;
+sun.shadow.camera.top = 16;
+sun.shadow.camera.bottom = -16;
+sun.shadow.bias = -0.0006;
+scene.add(sun);
+
+var fill = new THREE.DirectionalLight(0x9fc4dd, 0.28);
+fill.position.set(11, 8, 12);
+scene.add(fill);
+
+/* ---------- materials ---------- */
+var clipPlane = new THREE.Plane(new THREE.Vector3(0,-1,0), H);
+
+var wallMat = new THREE.MeshStandardMaterial({
+  color:0xe6e1d6, roughness:0.94, metalness:0.0,
+  clippingPlanes:[clipPlane], clipShadows:true
+});
+var wallExtMat = new THREE.MeshStandardMaterial({
+  color:0xd6d0c3, roughness:0.96, metalness:0.0,
+  clippingPlanes:[clipPlane], clipShadows:true
+});
+var glassMat = new THREE.MeshStandardMaterial({
+  color:0x9fd4e8, roughness:0.08, metalness:0.0,
+  transparent:true, opacity:0.24, side:THREE.DoubleSide,
+  clippingPlanes:[clipPlane]
+});
+var frameMat = new THREE.MeshStandardMaterial({
+  color:0x4a5560, roughness:0.6, metalness:0.2,
+  clippingPlanes:[clipPlane]
+});
+
+var slabMat = new THREE.MeshStandardMaterial({color:0x1b2732, roughness:1});
+
+/* ---------- groups ---------- */
+var wallGroup  = new THREE.Group(); scene.add(wallGroup);
+var glassGroup = new THREE.Group(); scene.add(glassGroup);
+var floorGroup = new THREE.Group(); scene.add(floorGroup);
+var furnGroup  = new THREE.Group(); scene.add(furnGroup);
+var labelGroup = new THREE.Group(); scene.add(labelGroup);
+
+/* ============================================================
+   კედლების აგება ღიობებით
+   ============================================================ */
+function addWall(x1,z1,x2,z2,t,h,openings,mat){
+  mat = mat || wallMat;
+  h = h || H;
+  openings = (openings||[]).slice().sort(function(a,b){return a.a-b.a;});
+  var dx = x2-x1, dz = z2-z1;
+  var len = Math.sqrt(dx*dx+dz*dz);
+  var ang = Math.atan2(dz,dx);
+  var g = new THREE.Group();
+  var gg = new THREE.Group();
+
+  function piece(a,b,y0,y1,m,th,target){
+    if(b-a < 0.004 || y1-y0 < 0.004) return;
+    var mesh = new THREE.Mesh(new THREE.BoxGeometry(b-a, y1-y0, th||t), m||mat);
+    mesh.position.set((a+b)/2, (y0+y1)/2, 0);
+    mesh.castShadow = true; mesh.receiveShadow = true;
+    (target||g).add(mesh);
+  }
+
+  var cur = 0;
+  for(var i=0;i<openings.length;i++){
+    var o = openings[i];
+    piece(cur, o.a, 0, h);
+    piece(o.a, o.b, 0, o.sill);
+    piece(o.a, o.b, o.top, h);
+    if(o.glass){
+      piece(o.a+0.05, o.b-0.05, o.sill+0.05, o.top-0.05, glassMat, t*0.18, gg);
+      // თხელი ჩარჩო ღიობის გარშემო
+      piece(o.a, o.a+0.05, o.sill, o.top, frameMat, t*0.34, gg);
+      piece(o.b-0.05, o.b, o.sill, o.top, frameMat, t*0.34, gg);
+      piece(o.a, o.b, o.top-0.05, o.top, frameMat, t*0.34, gg);
+      if(o.sill > 0.02) piece(o.a, o.b, o.sill, o.sill+0.05, frameMat, t*0.34, gg);
+    }
+    cur = o.b;
+  }
+  piece(cur, len, 0, h);
+
+  g.position.set(x1,0,z1);  g.rotation.y = -ang;
+  gg.position.set(x1,0,z1); gg.rotation.y = -ang;
+  wallGroup.add(g); glassGroup.add(gg);
+  return g;
+}
+
+/* ============================================================
+   კედლები
+   ============================================================ */
+
+/* --- ჩრდილოეთის ფასადი (აივნისკენ) --- */
+addWall(-0.30,-0.15, 9.50,-0.15, EXT, H, [
+  {a:0.45,b:3.25,sill:0,top:2.35,glass:true},   // მისაღები
+  {a:3.80,b:6.15,sill:0,top:2.35,glass:true},   // შუა საძინებელი
+  {a:6.60,b:9.35,sill:0,top:2.35,glass:true}    // მთავარი საძინებელი
+], wallExtMat);
+
+/* --- დასავლეთის ფასადი (მისაღები + ჩრდილოეთის აივანი) --- */
+addWall(-0.15,-1.75, -0.15,6.39, EXT, H, [
+  {a:2.85,b:4.35,sill:0.85,top:2.35,glass:true}, // მისაღების ფანჯარა
+  {a:6.70,b:7.60,sill:0,   top:2.20,glass:true}  // კარი დასავლეთ აივანზე
+], wallExtMat);
+
+/* --- აღმოსავლეთის ფასადი --- */
+addWall(9.50,-1.75, 9.50,7.20, EXT, H, [
+  {a:3.35,b:5.35,sill:0.85,top:2.35,glass:true}, // მთავარი საძინებლის ფანჯარა
+  {a:7.65,b:8.25,sill:1.40,top:2.20,glass:true}  // საპირფარეშოს ფანჯარა
+], wallExtMat);
+
+/* --- ქვედა დასავლეთის ფასადი (ქვედა საძინებელი) --- */
+addWall(-2.00,6.24, -2.00,9.75, EXT, H, [
+  {a:1.06,b:2.46,sill:0.85,top:2.35,glass:true}
+], wallExtMat);
+
+/* --- სამხრეთის ფასადი --- */
+addWall(-2.15,9.60, 6.15,9.60, EXT, H, [
+  {a:2.35,b:3.95,sill:0.85,top:2.35,glass:true}, // საძინებლის ფანჯარა
+  {a:6.75,b:7.55,sill:1.50,top:2.30,glass:true}  // სააბაზანოს ფანჯარა
+], wallExtMat);
+
+/* --- სააბაზანოსა და დერეფნის აღმოსავლეთის ფასადი --- */
+addWall(6.15,6.60, 6.15,9.75, EXT, H, [], wallExtMat);
+
+/* --- შესასვლელი ჰოლის სამხრეთის ფასადი (შესასვლელი კარი) --- */
+addWall(6.00,6.75, 7.25,6.75, EXT, H, [
+  {a:0.20,b:1.05,sill:0,top:2.20}
+], wallExtMat);
+
+/* --- საპირფარეშოს სამხრეთის ფასადი --- */
+addWall(7.10,7.05, 9.65,7.05, EXT, H, [], wallExtMat);
+
+/* --- კედელი ჰოლსა და საპირფარეშოს შორის --- */
+addWall(7.175,5.41, 7.175,7.05, INT, H, [
+  {a:0.29,b:1.09,sill:0,top:2.10}
+]);
+
+/* --- მთავარი საძინებლის სამხრეთის კედელი --- */
+addWall(6.075,5.485, 9.50,5.485, INT, H, [
+  {a:0.225,b:1.025,sill:0,top:2.10}
+]);
+
+/* --- კედელი შუა და მთავარ საძინებელს, დერეფანსა და ჰოლს შორის --- */
+addWall(6.075,-0.15, 6.075,6.75, INT, H, [
+  {a:5.85,b:6.65,sill:0,top:2.10}
+]);
+
+/* --- შუა ოთახის სამხრეთის კედელი --- */
+addWall(3.275,4.755, 6.075,4.755, INT, H, [
+  {a:1.775,b:2.625,sill:0,top:2.10}
+]);
+
+/* --- კედელი: მისაღები | შუა ოთახი | დერეფანი | ქვედა საძინებელი --- */
+addWall(3.275,-0.15, 3.275,7.70, INT, H, [
+  {a:5.25,b:6.30,sill:0,top:2.30},  // ღია გასასვლელი: მისაღები ↔ დერეფანი
+  {a:6.70,b:7.60,sill:0,top:2.10}   // კარი ქვედა საძინებელში
+]);
+
+/* --- დერეფნის სამხრეთის კედელი (სააბაზანოს კარი) --- */
+addWall(3.275,7.625, 6.075,7.625, INT, H, [
+  {a:0.325,b:1.225,sill:0,top:2.10}
+]);
+
+/* --- კედელი მისაღებსა და ქვედა საძინებელს შორის --- */
+addWall(-2.15,6.315, 3.275,6.315, 0.20, H, [], wallExtMat);
+
+/* --- აივნების მოაჯირები --- */
+addWall(-0.30,-1.675, 9.50,-1.675, 0.15, PAR, [], wallExtMat);
+addWall(-1.925,4.665, -0.15,4.665, 0.15, PAR, [], wallExtMat);
+addWall(-1.925,4.665, -1.925,6.315, 0.15, PAR, [], wallExtMat);
+
+/* ============================================================
+   იატაკები და ოთახები
+   ============================================================ */
+var C = {
+  live : 0xc9a882,   // თბილი პარკეტი
+  bed  : 0xd2b691,
+  hall : 0xc4b8a4,
+  wet  : 0x93a6ad,   // ფილა
+  out  : 0x8e8b82    // აივანი
+};
+
+var rooms = [
+  {n:'მისაღები + სამზარეულო',       a:'20.5', x1:0,     z1:0,     x2:3.20, z2:6.24, c:C.live},
+  {n:'საძინებელი',          a:'12.4', x1:3.35,  z1:0,     x2:6.00, z2:4.68, c:C.bed},
+  {n:'მთავარი საძინებელი',         a:'17.1', x1:6.15,  z1:0,     x2:9.35, z2:5.41, c:C.bed},
+  {n:'საძინებელი',          a:'14.7', x1:-1.85, z1:6.39,  x2:3.20, z2:9.30, c:C.bed},
+  {n:'დერეფანი',            a:'8.4',  x1:3.35,  z1:4.83,  x2:6.00, z2:7.55, c:C.hall},
+  {n:'',                  a:'',     x1:6.15,  z1:5.56,  x2:7.10, z2:6.60, c:C.hall},
+  {n:'სააბაზანო',          a:'4.2',  x1:3.35,  z1:7.70,  x2:6.00, z2:9.45, c:C.wet},
+  {n:'საპირფარეშო + სამრეცხაო',   a:'2.8',  x1:7.25,  z1:5.56,  x2:9.35, z2:6.90, c:C.wet},
+  {n:'აივანი',             a:'12.3', x1:0,     z1:-1.60, x2:9.35, z2:-0.30, c:C.out, out:true},
+  {n:'აივანი',             a:'2.3',  x1:-1.85, z1:4.74,  x2:-0.30, z2:6.24, c:C.out, out:true}
+];
+
+rooms.forEach(function(r){
+  var w = r.x2-r.x1, d = r.z2-r.z1;
+  var y = r.out ? -0.03 : 0;
+  var m = new THREE.Mesh(
+    new THREE.BoxGeometry(w, 0.14, d),
+    new THREE.MeshStandardMaterial({color:r.c, roughness:0.92, metalness:0})
+  );
+  m.position.set(r.x1+w/2, y-0.07, r.z1+d/2);
+  m.receiveShadow = true;
+  floorGroup.add(m);
+});
+
+/* ქვედა ბეტონის ფილა — შენობის კარკასი */
+var base = new THREE.Mesh(new THREE.BoxGeometry(13.4, 0.30, 12.6), slabMat);
+base.position.set(3.6, -0.29, 4.0);
+base.receiveShadow = true;
+scene.add(base);
+
+/* ============================================================
+   ავეჯი
+   ============================================================ */
+var M = {
+  wood  : new THREE.MeshStandardMaterial({color:0x8a5f3c, roughness:0.75}),
+  wood2 : new THREE.MeshStandardMaterial({color:0xb08757, roughness:0.7}),
+  soft  : new THREE.MeshStandardMaterial({color:0x5d6b78, roughness:0.95}),
+  soft2 : new THREE.MeshStandardMaterial({color:0x7c8b98, roughness:0.95}),
+  linen : new THREE.MeshStandardMaterial({color:0xe9e4da, roughness:0.95}),
+  white : new THREE.MeshStandardMaterial({color:0xf2f2f0, roughness:0.4}),
+  dark  : new THREE.MeshStandardMaterial({color:0x2b333b, roughness:0.6}),
+  steel : new THREE.MeshStandardMaterial({color:0xb9c2c8, roughness:0.3, metalness:0.6}),
+  stone : new THREE.MeshStandardMaterial({color:0x39424b, roughness:0.5}),
+  green : new THREE.MeshStandardMaterial({color:0x4d6b4a, roughness:0.9})
+};
+
+function mk(w,h,d,x,y,z,mat,parent,ry){
+  var m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat);
+  m.position.set(x, y+h/2, z);
+  if(ry) m.rotation.y = ry;
+  m.castShadow = true; m.receiveShadow = true;
+  (parent||furnGroup).add(m);
+  return m;
+}
+
+/* საწოლი — cx,cz ცენტრი; w სიგანე; l სიგრძე; dir თავის მიმართულება: 'w','e','n','s' */
+function bed(cx,cz,w,l,dir){
+  var g = new THREE.Group();
+  mk(w, 0.28, l, 0, 0, 0, M.wood, g);                        // კარკასი
+  mk(w-0.10, 0.20, l-0.10, 0, 0.28, 0, M.linen, g);          // ლეიბი
+  mk(w*0.42, 0.12, 0.42, -w*0.24, 0.48, -l/2+0.34, M.white, g);
+  mk(w*0.42, 0.12, 0.42,  w*0.24, 0.48, -l/2+0.34, M.white, g);
+  mk(w-0.10, 0.06, l*0.55, 0, 0.48, l*0.16, M.soft2, g);     // საბანი
+  mk(w+0.10, 0.85, 0.08, 0, 0, -l/2-0.04, M.wood2, g);       // საწოლის თავი
+  var rot = {n:0, s:Math.PI, w:Math.PI/2, e:-Math.PI/2}[dir||'n'];
+  g.rotation.y = rot;
+  g.position.set(cx, 0, cz);
+  furnGroup.add(g);
+  return g;
+}
+
+function nightstand(x,z){
+  mk(0.44,0.48,0.40,x,0,z,M.wood2);
+  mk(0.10,0.22,0.10,x,0.48,z,M.white);
+}
+
+function wardrobe(x1,z1,x2,z2){
+  var w=x2-x1, d=z2-z1;
+  mk(w,2.20,d,x1+w/2,0,z1+d/2,M.wood2);
+  // სახელურები
+  if(w>d) mk(w*0.5,0.03,0.03,x1+w/2,1.1,z1-0.02+ (d>0?0:0), M.steel);
+}
+
+function table(cx,cz,w,d,h){
+  h = h||0.74;
+  mk(w,0.06,d,cx,h-0.06,cz,M.wood2);
+  var ox=w/2-0.10, oz=d/2-0.10;
+  [[-ox,-oz],[ox,-oz],[-ox,oz],[ox,oz]].forEach(function(p){
+    mk(0.07,h-0.06,0.07,cx+p[0],0,cz+p[1],M.wood);
+  });
+}
+
+function chair(cx,cz,ry){
+  var g = new THREE.Group();
+  mk(0.42,0.04,0.42,0,0.44,0,M.wood2,g);
+  mk(0.42,0.46,0.05,0,0.48,-0.19,M.wood2,g);
+  [[-0.17,-0.17],[0.17,-0.17],[-0.17,0.17],[0.17,0.17]].forEach(function(p){
+    mk(0.05,0.44,0.05,p[0],0,p[1],M.wood,g);
+  });
+  g.position.set(cx,0,cz); g.rotation.y = ry||0;
+  furnGroup.add(g);
+}
+
+function toilet(x,z,ry){
+  var g = new THREE.Group();
+  mk(0.36,0.40,0.58,0,0,0,M.white,g);
+  mk(0.36,0.42,0.18,0,0.40,-0.20,M.white,g);
+  mk(0.34,0.06,0.44,0,0.40,0.05,M.white,g);
+  g.position.set(x,0,z); g.rotation.y = ry||0;
+  furnGroup.add(g);
+}
+
+function sink(x,z,ry){
+  var g = new THREE.Group();
+  mk(0.56,0.16,0.42,0,0.74,0,M.white,g);
+  mk(0.20,0.74,0.20,0,0,0,M.white,g);
+  mk(0.04,0.22,0.04,0,0.90,-0.14,M.steel,g);
+  g.position.set(x,0,z); g.rotation.y = ry||0;
+  furnGroup.add(g);
+}
+
+/* --- მისაღები + სამზარეულო --- */
+(function livingRoom(){
+  // დივანი დასავლეთ კედელთან
+  mk(0.85,0.36,2.20, 0.62,0,   2.05, M.soft);
+  mk(0.24,0.52,2.20, 0.27,0.36,2.05, M.soft2);
+  mk(0.62,0.16,0.95, 0.72,0.36,1.45, M.soft2);
+  mk(0.62,0.16,0.95, 0.72,0.36,2.60, M.soft2);
+  // ჟურნალის მაგიდა
+  mk(0.62,0.36,1.10, 1.80,0,2.05, M.wood);
+  // ტელევიზორის თუმბო
+  mk(0.38,0.46,1.70, 2.95,0,   2.05, M.dark);
+  mk(0.06,0.62,1.10, 2.88,0.70,2.05, M.dark);
+  // სასადილო ზონა
+  table(1.65,4.35,1.40,0.88);
+  chair(1.65,3.75,0); chair(1.65,4.95,Math.PI);
+  chair(0.90,4.35,Math.PI/2); chair(2.40,4.35,-Math.PI/2);
+  // მაცივარი
+  mk(0.72,1.85,0.68, 0.50,0,5.86, M.steel);
+  // ქვედა კარადა + სამუშაო ზედაპირი
+  mk(1.90,0.86,0.62, 2.05,0,5.90, M.white);
+  mk(1.98,0.05,0.66, 2.05,0.86,5.90, M.stone);
+  // ნიჟარა
+  mk(0.52,0.03,0.40, 1.55,0.87,5.88, M.steel);
+  mk(0.04,0.24,0.04, 1.55,0.91,5.68, M.steel);
+  // ქურა
+  mk(0.58,0.03,0.48, 2.65,0.89,5.88, M.dark);
+  // ზედა კარადები
+  mk(1.90,0.68,0.34, 2.05,1.52,6.05, M.white);
+  // მცენარე
+  mk(0.30,0.28,0.30, 0.45,0,0.55, M.wood);
+  mk(0.46,0.72,0.46, 0.45,0.28,0.55, M.green);
+})();
+
+/* --- შუა საძინებელი (12.4) --- */
+bed(4.45, 2.20, 1.60, 2.05, 'w');
+nightstand(3.60, 3.45);
+wardrobe(3.50, 4.02, 5.45, 4.62);
+
+/* --- მთავარი საძინებელი (17.1) --- */
+bed(8.25, 2.35, 1.85, 2.10, 'e');
+nightstand(9.05, 1.10);
+nightstand(9.05, 3.60);
+wardrobe(6.28, 1.20, 6.88, 4.30);
+mk(0.06,0.60,1.05, 6.10,0.95,3.90, M.dark); // ეკრანი
+
+/* --- ქვედა საძინებელი (14.7) --- */
+bed(-0.75, 8.15, 1.60, 2.05, 'w');
+nightstand(0.25, 7.20);
+wardrobe(-1.20, 6.52, 0.80, 7.12);
+mk(0.55,0.80,0.55, 2.70,0,9.00, M.wood2);
+
+/* --- სააბაზანო (4.2) --- */
+mk(1.60,0.55,0.72, 4.25,0,9.05, M.white);      // აბაზანა
+mk(1.46,0.06,0.58, 4.25,0.44,9.05, M.steel);
+sink(5.55,9.10, -Math.PI/2);
+toilet(5.62,8.15, -Math.PI/2);
+
+/* --- საპირფარეშო + სამრეცხაო (2.8) --- */
+toilet(7.62,5.85, 0);
+sink(8.35,5.82, 0);
+mk(0.62,0.86,0.62, 9.00,0,6.52, M.white);      // სარეცხი მანქანა
+mk(0.34,0.03,0.34, 9.00,0.87,6.52, M.dark);
+
+/* --- აივნები --- */
+table(1.60,-0.95,0.86,0.70,0.72);
+chair(0.85,-0.95, Math.PI/2);
+chair(2.35,-0.95, -Math.PI/2);
+mk(0.36,0.34,0.36, 6.40,0,-0.95, M.wood);
+mk(0.52,0.80,0.52, 6.40,0.34,-0.95, M.green);
+mk(0.36,0.34,0.36, 8.30,0,-0.95, M.wood);
+mk(0.52,0.66,0.52, 8.30,0.34,-0.95, M.green);
+chair(-1.05,5.15, Math.PI);
+chair(-1.05,5.85, 0);
+mk(0.30,0.28,0.30, -1.60,0,6.00, M.wood);
+mk(0.44,0.62,0.44, -1.60,0.28,6.00, M.green);
+
+/* ============================================================
+   ოთახების წარწერები
+   ============================================================ */
+function makeLabel(text, sub){
+  var c = document.createElement('canvas');
+  var s = 3;
+  c.width = 340*s; c.height = 128*s;
+  var g = c.getContext('2d');
+  g.scale(s,s);
+  g.direction = 'ltr';
+  g.textAlign = 'center';
+
+  g.fillStyle = 'rgba(14,22,30,0.80)';
+  g.strokeStyle = 'rgba(95,179,212,0.85)';
+  g.lineWidth = 1.5;
+  var x=8,y=8,w=324,h=112,r=4;
+  g.beginPath();
+  g.moveTo(x+r,y); g.lineTo(x+w-r,y); g.quadraticCurveTo(x+w,y,x+w,y+r);
+  g.lineTo(x+w,y+h-r); g.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  g.lineTo(x+r,y+h); g.quadraticCurveTo(x,y+h,x,y+h-r);
+  g.lineTo(x,y+r); g.quadraticCurveTo(x,y,x+r,y);
+  g.closePath(); g.fill(); g.stroke();
+
+  // fit the Georgian name inside the plate
+  var size = 40;
+  g.font = '600 ' + size + 'px "Noto Sans Georgian", Arial, sans-serif';
+  while(size > 20 && g.measureText(text).width > 292){
+    size -= 2;
+    g.font = '600 ' + size + 'px "Noto Sans Georgian", Arial, sans-serif';
+  }
+  g.fillStyle = '#eae5da';
+  g.fillText(text, 170, sub ? 56 : 74);
+  if(sub){
+    g.fillStyle = '#5fb3d4';
+    g.font = '500 34px "IBM Plex Mono", monospace';
+    g.fillText(sub, 170, 98);
+  }
+
+  var tex = new THREE.CanvasTexture(c);
+  tex.minFilter = THREE.LinearFilter;
+  var mat = new THREE.SpriteMaterial({map:tex, depthTest:false, transparent:true});
+  var sp = new THREE.Sprite(mat);
+  sp.scale.set(1.55, 0.58, 1);
+  sp.renderOrder = 999;
+  return sp;
+}
+
+function buildLabels(){
+  while(labelGroup.children.length){ labelGroup.remove(labelGroup.children[0]); }
+  rooms.forEach(function(r){
+    if(!r.n) return;
+    var sp = makeLabel(r.n, r.a + ' m²');
+    sp.position.set((r.x1+r.x2)/2, 1.45, (r.z1+r.z2)/2);
+    labelGroup.add(sp);
+  });
+}
+buildLabels();
+if(document.fonts && document.fonts.ready){
+  document.fonts.ready.then(buildLabels);
+}
+
+/* ============================================================
+   ლეგენდა
+   ============================================================ */
+(function(){
+  var ul = document.getElementById('legendList');
+  var html = '';
+  rooms.forEach(function(r){
+    if(!r.n) return;
+    html += '<li><span class="nm"><span class="sw" style="background:#'
+          + r.c.toString(16).padStart(6,'0') + '"></span>' + r.n
+          + '</span><span class="a">' + r.a + ' m²</span></li>';
+  });
+  html += '<li class="sum"><span class="nm">სულ</span><span class="a">100.3 m²</span></li>';
+  ul.innerHTML = html;
+})();
+
+/* ============================================================
+   კამერის მართვა
+   ============================================================ */
+var target = new THREE.Vector3(3.7, 0.9, 3.9);
+var theta = -2.15, phi = 0.92, radius = 19;
+var spin = false;
+
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+
+function updateCamera(){
+  phi = clamp(phi, 0.06, Math.PI/2 - 0.03);
+  radius = clamp(radius, 3, 55);
+  camera.position.set(
+    target.x + radius*Math.sin(phi)*Math.cos(theta),
+    target.y + radius*Math.cos(phi),
+    target.z + radius*Math.sin(phi)*Math.sin(theta)
+  );
+  camera.lookAt(target);
+}
+
+var el = renderer.domElement;
+var drag = null, pinch = null;
+
+function pointerDown(e){
+  if(e.touches){
+    if(e.touches.length === 1){
+      drag = {x:e.touches[0].clientX, y:e.touches[0].clientY, pan:false};
+      pinch = null;
+    } else if(e.touches.length === 2){
+      drag = null;
+      pinch = {d:touchDist(e), x:touchMidX(e), y:touchMidY(e)};
+    }
+  } else {
+    drag = {x:e.clientX, y:e.clientY, pan:(e.shiftKey || e.button === 1 || e.button === 2)};
+  }
+  spin = false; syncSpin();
+}
+function touchDist(e){
+  var dx = e.touches[0].clientX - e.touches[1].clientX;
+  var dy = e.touches[0].clientY - e.touches[1].clientY;
+  return Math.sqrt(dx*dx+dy*dy);
+}
+function touchMidX(e){ return (e.touches[0].clientX + e.touches[1].clientX)/2; }
+function touchMidY(e){ return (e.touches[0].clientY + e.touches[1].clientY)/2; }
+
+function panBy(dx,dy){
+  var k = radius * 0.0016;
+  var right = new THREE.Vector3(Math.sin(theta), 0, -Math.cos(theta));
+  var fwd   = new THREE.Vector3(-Math.cos(theta), 0, -Math.sin(theta));
+  target.addScaledVector(right, -dx*k);
+  target.addScaledVector(fwd,  -dy*k);
+}
+
+function pointerMove(e){
+  if(e.touches && e.touches.length === 2 && pinch){
+    e.preventDefault();
+    var d = touchDist(e);
+    radius *= pinch.d / d;
+    panBy(touchMidX(e)-pinch.x, touchMidY(e)-pinch.y);
+    pinch = {d:d, x:touchMidX(e), y:touchMidY(e)};
+    updateCamera();
+    return;
+  }
+  if(!drag) return;
+  var cx = e.touches ? e.touches[0].clientX : e.clientX;
+  var cy = e.touches ? e.touches[0].clientY : e.clientY;
+  var dx = cx - drag.x, dy = cy - drag.y;
+  drag.x = cx; drag.y = cy;
+  if(e.touches) e.preventDefault();
+  if(drag.pan){
+    panBy(dx,dy);
+  } else {
+    theta -= dx * 0.006;
+    phi   -= dy * 0.006;
+  }
+  updateCamera();
+}
+function pointerUp(){ drag = null; pinch = null; }
+
+el.addEventListener('mousedown', pointerDown);
+window.addEventListener('mousemove', pointerMove);
+window.addEventListener('mouseup', pointerUp);
+el.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+el.addEventListener('touchstart', pointerDown, {passive:true});
+el.addEventListener('touchmove', pointerMove, {passive:false});
+el.addEventListener('touchend', pointerUp);
+el.addEventListener('wheel', function(e){
+  e.preventDefault();
+  radius *= (1 + Math.sign(e.deltaY) * 0.09);
+  updateCamera();
+}, {passive:false});
+
+/* ============================================================
+   ინტერფეისი
+   ============================================================ */
+function seg(id, fn){
+  var box = document.getElementById(id);
+  box.addEventListener('click', function(e){
+    var b = e.target.closest('button');
+    if(!b) return;
+    [].forEach.call(box.querySelectorAll('button'), function(x){ x.classList.remove('on'); });
+    b.classList.add('on');
+    fn(b);
+  });
+}
+
+seg('segCut', function(b){
+  clipPlane.constant = parseFloat(b.dataset.cut);
+});
+
+seg('segView', function(b){
+  var v = b.dataset.view;
+  if(v === 'top'){
+    theta = -Math.PI/2; phi = 0.07; radius = 17;
+    target.set(3.7, 0, 3.9);
+  } else if(v === 'eye'){
+    theta = -1.85; phi = 1.45; radius = 12;
+    target.set(3.7, 1.5, 4.2);
+  } else {
+    theta = -2.15; phi = 0.92; radius = 19;
+    target.set(3.7, 0.9, 3.9);
+  }
+  updateCamera();
+});
+
+function tgl(id, fn){
+  var b = document.getElementById(id);
+  b.addEventListener('click', function(){
+    b.classList.toggle('on');
+    fn(b.classList.contains('on'));
+  });
+}
+tgl('tFurn',  function(on){ furnGroup.visible = on; });
+tgl('tLbl',   function(on){ labelGroup.visible = on; });
+tgl('tGlass', function(on){ glassGroup.visible = on; });
+tgl('tSpin',  function(on){ spin = on; });
+
+function syncSpin(){
+  var b = document.getElementById('tSpin');
+  if(!spin) b.classList.remove('on');
+}
+
+document.getElementById('panelToggle').addEventListener('click', function(){
+  document.body.classList.toggle('collapsed');
+});
+
+window.addEventListener('resize', function(){
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+/* ============================================================
+   რენდერის ციკლი
+   ============================================================ */
+updateCamera();
+
+function tick(){
+  requestAnimationFrame(tick);
+  if(spin){ theta += 0.0022; updateCamera(); }
+  renderer.render(scene, camera);
+}
+tick();
+
+setTimeout(function(){
+  document.getElementById('loading').classList.add('gone');
+}, 350);
+
+})();
+</script>
+</body>
+</html>
