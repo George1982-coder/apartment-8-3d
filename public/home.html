@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0f1720">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="דירה 8">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <title>ბინა №8 — 2D / 3D</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,7 +25,7 @@
     font-family:"Noto Sans Georgian","Segoe UI",Arial,sans-serif;
     -webkit-font-smoothing:antialiased;
     display:flex;align-items:center;justify-content:center;
-    padding:max(24px, env(safe-area-inset-top)) 20px max(28px, env(safe-area-inset-bottom));
+    padding:max(24px, env(safe-area-inset-top)) 20px max(96px, calc(28px + env(safe-area-inset-bottom)));
   }
   .wrap{width:min(720px,100%)}
   .kicker{
@@ -53,6 +59,9 @@
   a.card.three .mark{background:rgba(224,164,88,.14);color:var(--amber)}
   .ttl{font-size:22px;font-weight:800;margin-top:auto}
   .cap{font-size:13.5px;color:var(--dim);line-height:1.55}
+  .install-note{
+    margin-top:22px;color:var(--dim);font-size:13.5px;line-height:1.65;text-align:right;direction:rtl;
+  }
   @media (max-width:560px){
     .grid{grid-template-columns:1fr}
     a.card{min-height:160px}
@@ -77,6 +86,8 @@
         <p class="cap">מודל תלת־ממד — סיבוב, חתך וגובה קירות</p>
       </a>
     </div>
+    <p class="install-note">אפשר גם להתקין למסך הבית במובייל — באנדרואיד יופיע כפתור התקנה, ובאייפון: Safari → שיתוף → הוספה למסך הבית.</p>
   </div>
+  <script src="/pwa.js"></script>
 </body>
 </html>
